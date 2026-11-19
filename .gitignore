@@ -1,0 +1,12 @@
+# Ignore CMake build artifacts and binaries
+build/
+bin/
+*.o
+*.obj
+*.exe
+*.out
+
+# Ignore IDE / Editor configurations
+.vscode/
+.idea/
+*.swp
