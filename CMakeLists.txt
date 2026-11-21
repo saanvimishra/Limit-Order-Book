@@ -13,4 +13,4 @@ endif()
 
 include_directories(include)
 
-add_executable(matching_engine src/main.cpp)
+add_executable(matching_engine src/main.cpp src/PriceLevel.cpp)
