@@ -2,44 +2,44 @@
 #include <cassert>
 #include "Order.h"
 #include "PriceLevel.h"
+#include "OrderBook.h"
 using namespace std;
 
 int main() {
-    cout<< "Checking PriceLevel FIFO queue\n\n";
+    cout<< "Order Book Test" << endl;
 
-    PriceLevel level(10050); //price level $100.50
-    assert(level.is_empty());
-    assert(level.get_total_quantity() == 0);
+    OrderBook book;
+    uint32_t best_bid=0, best_ask=0;
 
-    //adding some orders
-    auto order1 = level.add_order(Order(1001, Intent::Buy, OrderType::Limit, 10050, 50, 1000));
-    auto order2 = level.add_order(Order(1002, Intent::Buy, OrderType::Limit, 10050, 30, 2000));
-    auto order3 = level.add_order(Order(1003, Intent::Buy, OrderType::Limit, 10050, 20, 3000));
+    assert(book.is_empty());
+    assert(!book.get_best_bid(best_bid));
+    assert(!book.get_best_ask(best_ask));
 
-    assert(level.get_order_count() == 3);
-    assert(level.get_total_quantity() == 100);
-    assert(level.front().id == 1001);
+    //add resting buy orders
+    book.add_resting_order(Order(1, Intent::Buy, OrderType::Limit, 10000, 50, 1000));
+    book.add_resting_order(Order(2, Intent::Buy, OrderType::Limit, 10050, 30, 2000)); //best bid
+    book.add_resting_order(Order(3, Intent::Buy, OrderType::Limit, 10050, 20, 3000));
 
-    //cancel the second order
-    cout<< "Canceling order #1002\n";
-    level.remove_order(order2);
-    assert(level.get_order_count() == 2);
-    assert(level.get_total_quantity() == 70);
-    assert(level.front().id == 1001);
-    assert(order3->id == 1003);
+    //add resting sell orders
+    book.add_resting_order(Order(4, Intent::Sell, OrderType::Limit, 10150, 40, 4000));
+    book.add_resting_order(Order(5, Intent::Sell, OrderType::Limit, 10100, 25, 5000)); //best ask
 
-    //fill first order
-    cout<< "Filling order #1001 for 30 shares\n";
-    order1->fill(30);
-    level.reduce_quantity(30);
-    assert(level.get_total_quantity() == 40);
+    book.print_order_book();
 
-    //fill first order completely
-    level.remove_order(order1);
-    assert(level.get_order_count() == 1);
-    assert(level.get_total_quantity() == 20);
-    assert(level.front().id == 1003);
+    assert(book.active_order_count() == 5);
+    assert(book.get_best_bid(best_bid) && best_bid == 10050);
+    assert(book.get_best_ask(best_ask) && best_ask == 10100);
 
-    cout<< "All tests passed!\n";
+    //cancel order 5
+    assert(book.cancel_order(5)== true);
+    assert(book.cancel_order(5) == false);
+
+    //best ask must shift to 10150
+    assert(book.get_best_ask(best_ask) && best_ask == 10150);
+    assert(book.active_order_count() == 4);
+
+    book.print_order_book();
+
+    cout<< "All tests passed!" << endl;    
     return 0;
 }
